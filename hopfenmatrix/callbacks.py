@@ -67,7 +67,7 @@ def auto_join(client: AsyncClient,
 
 def debug() -> Callback:
     async def callback(room: MatrixRoom, event: Event) -> None:
-        logger.debug(f"Recieved event {event} in room {room}")
+        logger.debug(f"Received event: {repr(event)}")
     return callback
 
 
