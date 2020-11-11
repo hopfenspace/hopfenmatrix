@@ -5,7 +5,7 @@ Collection of helper functions for interacting with the chat
 import logging
 
 from markdown import markdown
-from nio import SendRetryError
+from nio import SendRetryError, RoomMessage
 
 logger = logging.getLogger(__name__)
 
@@ -42,4 +42,34 @@ async def send_text_to_room(client, room_id, message, notice=True, markdown_conv
             room_id, "m.room.message", content, ignore_unverified_devices=True,
         )
     except SendRetryError:
-        logger.exception(f"Unable to send message response to {room_id}")
+        logger.exception(f"Unable to send message to {room_id}")
+
+
+async def reply_to(client, event: RoomMessage, message: str, notice: bool = True):
+    msg_type = "m.notice" if notice else "m.text"
+
+    # TODO get dynamicly
+    server = "matrix.hopfenspace.org"
+    content = {
+        "msgtype": msg_type,
+        "format": "org.matrix.custom.html",
+        "body": f"> <{event.sender}> {event.body}\n\n{message}",
+        "formatted_body": f"<mx-reply><blockquote>"
+                          f"<a href=\"https://matrix.to/#/{event.room_id}/{event.event_id}?via={server}\">In reply to</a>"
+                          f"<a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br>"
+                          f"{event.body}"
+                          f"</blockquote></mx-reply>"
+                          f"{message}",
+        "m.relates_to": {
+            "m.in_reply_to": {
+                "event_id": event.event_id
+            }
+        }
+    }
+
+    try:
+        await client.room_send(
+            event.room_id, "m.room.message", content, ignore_unverified_devices=True
+        )
+    except SendRetryError:
+        logger.exception(f"Unable to send message to {event.room_id}")
