@@ -60,6 +60,8 @@ async def run(client: AsyncClient, user_id: str, user_password: str, device_name
 
             # Sleep so we don't bombard the server with login requests
             sleep(15)
+        except KeyboardInterrupt:
+            logger.info("Exiting bot")
         finally:
             # Make sure to close the client connection on disconnect
             await client.close()

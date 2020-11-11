@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 class JsonConfig(dict):
 
     def __init__(self, config_path=None):
+        super().__init__()
         self["matrix"] = {
             "user_id": "@bot:example.org",
             "user_password": "1234",
