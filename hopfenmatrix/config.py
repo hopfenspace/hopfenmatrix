@@ -2,6 +2,8 @@ import logging
 import json
 import sys
 
+from nio import AsyncClient, AsyncClientConfig
+
 logger = logging.getLogger()
 
 
@@ -79,6 +81,17 @@ class JsonConfig(dict):
     @property
     def store_path(self):
         return self["matrix"]["database_directory"]
+
+    def new_async_client(self, client_config: AsyncClientConfig, ssl: bool = None, proxy: str = None) -> AsyncClient:
+        return AsyncClient(
+            self.homeserver,
+            self.user_id,
+            device_id=self.device_id,
+            store_path=self.store_path,
+            config=client_config,
+            ssl=ssl,
+            proxy=proxy
+        )
 
     def init(self):
         pass
