@@ -46,7 +46,7 @@ class JsonConfig(dict):
 
         logger.setLevel(self["logging"]["level"])
 
-        if self["logging", "file_logging"]["enabled"]:
+        if self["logging"]["file_logging"]["enabled"]:
             handler = logging.FileHandler(
                 self["logging"]["file_logging"]["filepath"]
             )
