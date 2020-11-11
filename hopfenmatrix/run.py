@@ -11,18 +11,18 @@ from nio import (
 logger = logging.getLogger(__name__)
 
 
-async def run(client: AsyncClient, user: str, password: str, device: str):
+async def run(client: AsyncClient, user_id: str, user_password: str, device_name: str):
     """
     This function runs a client as user in an endless loop.
 
     :param client: the client object to use
     :type client: AsyncClient
-    :param user: the user to run as
-    :type user: str
-    :param password: the user password to authenticate
-    :type password: str
-    :param device: the device to run as
-    :type device: str
+    :param user_id: the user to run as
+    :type user_id: str
+    :param user_password: the user password to authenticate
+    :type user_password: str
+    :param device_name: the device to run as
+    :type device_name: str
     """
 
     # Keep trying to reconnect on failure (with some time in-between)
@@ -31,7 +31,7 @@ async def run(client: AsyncClient, user: str, password: str, device: str):
             # Try to login with the configured username/password
             try:
                 login_response = await client.login(
-                    password=password, device_name=device,
+                    password=user_password, device_name=device_name,
                 )
 
                 # Check if login failed
@@ -52,7 +52,7 @@ async def run(client: AsyncClient, user: str, password: str, device: str):
 
             # Login succeeded!
 
-            logger.info(f"Logged in as {user}")
+            logger.info(f"Logged in as {user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
 
         except (ClientConnectionError, ServerDisconnectedError):
