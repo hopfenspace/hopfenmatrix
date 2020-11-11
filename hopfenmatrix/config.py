@@ -59,6 +59,26 @@ class JsonConfig(dict):
             logger.addHandler(handler)
 
     @property
+    def homeserver(self):
+        return self["matrix"]["homeserver"]
+
+    @property
+    def user_id(self):
+        return self["matrix"]["user_id"]
+
+    @property
+    def user_password(self):
+        return self["matrix"]["user_password"]
+
+    @property
+    def device_id(self):
+        return self["matrix"]["device_id"]
+
+    @property
+    def device_name(self):
+        return self["matrix"]["device_name"]
+
+    @property
     def store_path(self):
         return self["storage"]["store_path"]
 
