@@ -14,11 +14,8 @@ class JsonConfig(dict):
             "user_password": "1234",
             "homeserver": "https://example.org",
             "device_id": "device0",
-            "device_name": "Some Matrix Bot"
-        }
-        self["storage"] = {
-            "database": "sqlite://bot.db",
-            "store_path": "./store"
+            "device_name": "Some Matrix Bot",
+            "database_directory": "./store"
         }
         self["logging"] = {
             "level": "INFO",
@@ -81,25 +78,7 @@ class JsonConfig(dict):
 
     @property
     def store_path(self):
-        return self["storage"]["store_path"]
-
-    @property
-    def database(self):
-        db_path = self["storage"]["database"]
-        sqlite_scheme = "sqlite://"
-        postgres_scheme = "postgres://"
-        if db_path.startswith(sqlite_scheme):
-            return {
-                "type": "sqlite",
-                "connection_string": db_path[len(sqlite_scheme):],
-            }
-        elif db_path.startswith(postgres_scheme):
-            return {
-                "type": "postgres",
-                "connection_string": db_path
-            }
-        else:
-            raise ValueError("Invalid connection string in config 'storage.database'")
+        return self["matrix"]["database_directory"]
 
     def init(self):
         pass
