@@ -143,7 +143,7 @@ class Config(Namespace):
             self.matrix.homeserver,
             self.matrix.user_id,
             device_id=self.matrix.device_id,
-            store_path=self.matrix.store_path,
+            store_path=self.matrix.database_directory,
             config=client_config,
             ssl=ssl,
             proxy=proxy
