@@ -140,10 +140,10 @@ class Config(Namespace):
         :rtype: AsyncClient
         """
         return AsyncClient(
-            self.homeserver,
-            self.user_id,
-            device_id=self.device_id,
-            store_path=self.store_path,
+            self.matrix.homeserver,
+            self.matrix.user_id,
+            device_id=self.matrix.device_id,
+            store_path=self.matrix.store_path,
             config=client_config,
             ssl=ssl,
             proxy=proxy
