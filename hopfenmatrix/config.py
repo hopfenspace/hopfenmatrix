@@ -67,26 +67,32 @@ class Config(Namespace):
         self.logging.console_logging.enabled = True
 
     @classmethod
-    def from_dict(cls, dct: Dict[str, Any]) -> "Config":
+    def from_dict(cls, dct: Dict[str, Any], setup_logging: bool = True) -> "Config":
         """
         Create a config instance and load the values from a dict.
 
         :param dct: the config values
         :type dct: Dict[str, Any]
+        :param setup_logging: whether to call setup_logging automatically
+        :type setup_logging: bool
         :return: config instance
         :rtype: Config
         """
         config = cls()
         cls._update(config, dct)
+        if setup_logging:
+            config.setup_logging()
         return config
 
     @classmethod
-    def from_json(cls, config_file: str) -> "Config":
+    def from_json(cls, config_file: str, setup_logging: bool = True) -> "Config":
         """
         Load a json file and create a config instance from it.
 
         :param config_file: path to json file to load
         :type config_file: str
+        :param setup_logging: whether to call setup_logging automatically
+        :type setup_logging: bool
         :return: config instance
         :rtype: Config
         """
@@ -94,7 +100,7 @@ class Config(Namespace):
 
         with open(config_file) as f:
             dct = json.load(f)
-        return cls.from_dict(dct)
+        return cls.from_dict(dct, setup_logging)
 
     @staticmethod
     def _update(dct, dct2):
