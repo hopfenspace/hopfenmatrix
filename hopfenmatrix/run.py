@@ -8,23 +8,19 @@ from nio import (
     LoginError,
 )
 
-from hopfenmatrix.config import JsonConfig
+from hopfenmatrix.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-async def run(client: AsyncClient, config: JsonConfig):
+async def run(client: AsyncClient, config: Config):
     """
     This function runs a client as user in an endless loop.
 
     :param client: the client object to use
     :type client: AsyncClient
-    :param user_id: the user to run as
-    :type user_id: str
-    :param user_password: the user password to authenticate
-    :type user_password: str
-    :param device_name: the device to run as
-    :type device_name: str
+    :param config: the config to run with
+    :type config: Config
     """
 
     # Keep trying to reconnect on failure (with some time in-between)
@@ -33,7 +29,7 @@ async def run(client: AsyncClient, config: JsonConfig):
             # Try to login with the configured username/password
             try:
                 login_response = await client.login(
-                    password=config.user_password, device_name=config.device_name,
+                    password=config.matrix.user_password, device_name=config.matrix.device_name,
                 )
 
                 # Check if login failed
@@ -54,7 +50,7 @@ async def run(client: AsyncClient, config: JsonConfig):
 
             # Login succeeded!
 
-            logger.info(f"Logged in as {config.user_id}")
+            logger.info(f"Logged in as {config.matrix.user_id}")
             await client.sync_forever(timeout=30000, full_state=True)
 
         except (ClientConnectionError, ServerDisconnectedError):
