@@ -1,3 +1,5 @@
+import os
+
 from nio import AsyncClientConfig, AsyncClient
 from hopfenmatrix.config import Config
 
@@ -29,6 +31,8 @@ def new_async_client(
             store_sync_tokens=True,
             encryption_enabled=True,
         )
+    if not os.path.isdir(config.matrix.database_directory):
+        os.mkdir(config.matrix.database_directory)
     return AsyncClient(
         config.matrix.homeserver,
         config.matrix.user_id,
