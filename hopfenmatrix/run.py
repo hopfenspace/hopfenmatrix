@@ -1,5 +1,6 @@
 import logging
 from time import sleep
+import asyncio
 
 from aiohttp import ClientConnectionError, ServerDisconnectedError
 from nio import (
@@ -13,7 +14,7 @@ from hopfenmatrix.config import Config
 logger = logging.getLogger(__name__)
 
 
-async def run(client: AsyncClient, config: Config):
+async def run(client: AsyncClient, config: Config, callbacks: list = None):
     """
     This function runs a client as user in an endless loop.
 
@@ -21,6 +22,8 @@ async def run(client: AsyncClient, config: Config):
     :type client: AsyncClient
     :param config: the config to run with
     :type config: Config
+    :param callbacks: Async callback functions
+    :type callbacks: list
     """
 
     # Keep trying to reconnect on failure (with some time in-between)
@@ -50,8 +53,15 @@ async def run(client: AsyncClient, config: Config):
                 return False
 
             # Login succeeded!
-
             logger.info(f"Logged in as {config.matrix.user_id}")
+
+            # Sync client first time
+            asyncio.get_event_loop().run_until_complete(client.sync(full_state=True, timeout=30000))
+
+            # Call all callbacks
+            for callback in callbacks:
+                asyncio.get_event_loop().create_task(callback)
+
             await client.sync_forever(timeout=30000, full_state=True, loop_sleep_time=100)
 
         except (ClientConnectionError, ServerDisconnectedError):
