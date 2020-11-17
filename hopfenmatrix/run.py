@@ -28,6 +28,7 @@ async def run(client: AsyncClient, config: Config):
         try:
             # Try to login with the configured username/password
             try:
+                logger.info(f"Trying to log in as {config.matrix.user_id}")
                 login_response = await client.login(
                     password=config.matrix.user_password, device_name=config.matrix.device_name,
                 )
