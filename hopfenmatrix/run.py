@@ -52,7 +52,7 @@ async def run(client: AsyncClient, config: Config):
             # Login succeeded!
 
             logger.info(f"Logged in as {config.matrix.user_id}")
-            await client.sync_forever(timeout=30000, full_state=True)
+            await client.sync_forever(timeout=30000, full_state=True, loop_sleep_time=100)
 
         except (ClientConnectionError, ServerDisconnectedError):
             logger.warning("Unable to connect to homeserver, retrying in 15s...")
