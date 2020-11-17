@@ -4,7 +4,7 @@ from hopfenmatrix.config import Config
 
 def new_async_client(
         config: Config,
-        client_config: AsyncClientConfig,
+        client_config: AsyncClientConfig = None,
         ssl: bool = None,
         proxy: str = None
 ) -> AsyncClient:
@@ -22,6 +22,13 @@ def new_async_client(
     :return: an AsyncClient instance
     :rtype: AsyncClient
     """
+    if not client_config:
+        client_config = AsyncClientConfig(
+            max_limit_exceeded=0,
+            max_timeouts=0,
+            store_sync_tokens=True,
+            encryption_enabled=True,
+        )
     return AsyncClient(
         config.matrix.homeserver,
         config.matrix.user_id,
