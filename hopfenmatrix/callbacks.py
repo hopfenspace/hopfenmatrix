@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from functools import wraps
 from typing import Callable, List
@@ -53,6 +54,7 @@ def auto_join(client: AsyncClient,
 
         # Attempt to join 3 times before giving up
         for attempt in range(1, retries+1):
+            await asyncio.sleep(1)
             result = await client.join(room.room_id)
             if isinstance(result, JoinError):
                 logger.error(
