@@ -1,4 +1,5 @@
 import logging
+import os.path
 import sys
 from typing import Dict, Any
 
@@ -97,7 +98,10 @@ class Config(Namespace):
         :rtype: Config
         """
         import json
-
+        if not os.path.exists(config_file):
+            with open(config_file, "w") as fh:
+                json.dump(cls(), fh, indent=2)
+                raise ConfigError(f"{config_file} not found, generated template")
         with open(config_file) as f:
             dct = json.load(f)
         return cls.from_dict(dct, setup_logging)
