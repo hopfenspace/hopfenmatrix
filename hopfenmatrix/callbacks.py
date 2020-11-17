@@ -49,7 +49,7 @@ def auto_join(client: AsyncClient,
     :return: a callback
     """
     async def callback(room: MatrixRoom, event: Event) -> None:
-        logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
+        logger.info(f"Got invite to {room.room_id} from {event.sender}.")
 
         # Attempt to join 3 times before giving up
         for attempt in range(1, retries+1):
