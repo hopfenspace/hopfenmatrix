@@ -20,6 +20,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        matrix-nio[e2e]
+        "matrix-nio[e2e]"
     ]
 )
