@@ -5,9 +5,9 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="hopfenmatrix",
-    version="0.0.1",
+    version="0.0.2",
     author="Wolfgang Fischer, Niklas Pfister",
-    author_email="kontakt@omikron.pw",
+    author_email="kontakt@omikron.dev",
     description="A library to make matrix-nio easier",
     long_description=long_description,
     long_description_content_type="text/markdown",
