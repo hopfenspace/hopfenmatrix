@@ -14,7 +14,7 @@ from hopfenmatrix.config import Config
 logger = logging.getLogger(__name__)
 
 
-async def start_bot(client: AsyncClient, config: Config, callbacks: list = []):
+async def start_bot(client: AsyncClient, config: Config, callbacks=None):
     """
     This function runs a client as user in an endless loop.
 
@@ -26,6 +26,8 @@ async def start_bot(client: AsyncClient, config: Config, callbacks: list = []):
     :type callbacks: list
     """
 
+    if callbacks is None:
+        callbacks = []
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
         try:
