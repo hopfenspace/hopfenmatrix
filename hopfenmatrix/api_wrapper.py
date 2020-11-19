@@ -3,6 +3,7 @@ import logging
 import os
 from collections import Coroutine
 
+import typing
 from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage
 
 from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users
@@ -40,17 +41,27 @@ class ApiWrapper:
     """
     This class is used to wrap common functions of the API.
 
+    :param display_name: Set the display name of the bot.
+    :type display_name: str
+    :param config: This config is used instead of generating or loading one. If not specified, the default configuration
+    is used
+    :type config: Config
     :param config_path: Path to the configuration file. If not existent, the default configuration will be created.
     Defaults to config.json
     :type config_path: str
-    :param config: This config class to retrieve information about the bot. If not specified, the default configuration
-    is used
-    :type config: Config
-    :param display_name: Set the display name of the bot.
-    :type display_name: str
+    :param config_class: Config class. Will be loaded or generated from config_path
+    :type config_class: typing.Type[Config]
     """
-    def __init__(self, display_name: str = None, config_path: str = "config.json", config: Config = None):
+    def __init__(
+            self, *,
+            display_name: str = None,
+            config: Config = None,
+            config_path: str = "config.json",
+            config_class: typing.Type[Config] = None
+    ):
         if config:
+            self.config = config
+        elif config_class:
             self.config = config.from_json(config_path)
         else:
             self.config = Config().from_json(config_path)
