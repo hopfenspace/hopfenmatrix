@@ -126,11 +126,13 @@ class ApiWrapper:
         else:
             if allowed_rooms:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_rooms(allowed_rooms))
+                    apply_filter(auto_join(self.client), filter_allowed_rooms(allowed_rooms)),
+                    EventType.ROOM_INVITE.value
                 )
             if allowed_users:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_users(allowed_users))
+                    apply_filter(auto_join(self.client), filter_allowed_users(allowed_users)),
+                    EventType.ROOM_INVITE.value
                 )
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
