@@ -4,46 +4,35 @@ import asyncio
 
 from aiohttp import ClientConnectionError, ServerDisconnectedError
 from nio import (
-    AsyncClient,
     LocalProtocolError,
     LoginError,
 )
 
-from hopfenmatrix.config import Config
-
 logger = logging.getLogger(__name__)
 
 
-async def start_bot(
-        client: AsyncClient,
-        config: Config,
-        callbacks=None,
-        *,
-        display_name=None
+async def run(
+        api
 ):
     """
     This function runs a client as user in an endless loop.
 
-    :param client: the client object to use
-    :type client: AsyncClient
-    :param config: the config to run with
-    :type config: Config
-    :param callbacks: Async callback functions
-    :type callbacks: list
-    :param display_name: Set the display name of the bot
-    :type display_name: str
+    :param api: ApiWrapper which holds the config and the client
+    :type api: ApiWrapper
     """
 
-    if callbacks is None:
+    if api.coroutine_callbacks is None:
         callbacks = []
+    else:
+        callbacks = api.coroutine_callbacks
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
         try:
             # Try to login with the configured username/password
             try:
-                logger.info(f"Trying to log in as {config.matrix.user_id}")
-                login_response = await client.login(
-                    password=config.matrix.user_password, device_name=config.matrix.device_name,
+                logger.info(f"Trying to log in as {api.config.matrix.user_id}")
+                login_response = await api.client.login(
+                    password=api.config.matrix.user_password, device_name=api.config.matrix.device_name,
                 )
 
                 # Check if login failed
@@ -63,20 +52,20 @@ async def start_bot(
                 return False
 
             # Login succeeded!
-            logger.info(f"Logged in as {config.matrix.user_id}")
+            logger.info(f"Logged in as {api.config.matrix.user_id}")
 
             # Sync client first time
-            await asyncio.get_event_loop().create_task(client.sync(full_state=True, timeout=30000))
+            await asyncio.get_event_loop().create_task(api.client.sync(full_state=True, timeout=30000))
 
             # Set display name
-            if display_name:
-                await client.set_displayname(display_name)
+            if api.display_name:
+                await api.client.set_displayname(api.display_name)
 
             # Call all callbacks
             for callback in callbacks:
                 asyncio.get_event_loop().create_task(callback)
 
-            await client.sync_forever(timeout=30000, full_state=True, loop_sleep_time=100)
+            await api.client.sync_forever(timeout=30000, full_state=True, loop_sleep_time=100)
 
         except (ClientConnectionError, ServerDisconnectedError):
             logger.warning("Unable to connect to homeserver, retrying in 15s...")
@@ -87,4 +76,4 @@ async def start_bot(
             logger.info("Exiting bot")
         finally:
             # Make sure to close the client connection on disconnect
-            await client.close()
+            await api.client.close()

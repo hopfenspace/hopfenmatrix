@@ -1,7 +1,13 @@
 import enum
 import logging
+import os
+from collections import Coroutine
 
-from nio import AsyncClient, SendRetryError
+from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage
+
+from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users
+from hopfenmatrix.config import Config
+from hopfenmatrix.run import run
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +26,111 @@ class MessageType(enum.Enum):
     EMOTE = "m.emote"
 
 
+class EventType(enum.Enum):
+    """
+    This class is used to map the available event types.
+    """
+    ROOM_INVITE = InviteMemberEvent
+    "This event represents the event of being invited to a room"
+    ROOM_MESSAGE = RoomMessage
+    "This is the event when receiving a message"
+
+
 class ApiWrapper:
     """
     This class is used to wrap common functions of the API.
 
-    :param client: The AsyncClient, has to be synced once in order to be able to send to rooms
-    :type client: AsyncClient
-    :param config: This config class to retrieve information about the bot
+    :param config_path: Path to the configuration file. If not existent, the default configuration will be created.
+    Defaults to config.json
+    :type config_path: str
+    :param config: This config class to retrieve information about the bot. If not specified, the default configuration
+    is used
     :type config: Config
+    :param display_name: Set the display name of the bot.
+    :type display_name: str
     """
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
+    def __init__(self, display_name: str = None, config_path: str = "config.json", config: Config = None):
+        if config:
+            self.config = config.from_json(config_path)
+        else:
+            self.config = Config().from_json(config_path)
+        self.client = self._new_async_client()
+        self.display_name = display_name
+        self.coroutine_callbacks = []
+
+    def _new_async_client(
+            self,
+            client_config: AsyncClientConfig = None,
+            ssl: bool = None,
+            proxy: str = None
+    ) -> AsyncClient:
+        """
+        Use the config values to create an AsyncClient
+
+        :param client_config: a nio config object for AsyncClient's constructor
+        :type client_config: AsyncClientConfig
+        :param ssl: flag whether to use ssl
+        :type ssl: bool
+        :param proxy: address for a proxy
+        :type proxy: str
+        """
+        if not client_config:
+            client_config = AsyncClientConfig(
+                max_limit_exceeded=0,
+                max_timeouts=0,
+                store_sync_tokens=True,
+                encryption_enabled=True,
+            )
+        if not os.path.isdir(self.config.matrix.database_directory):
+            os.mkdir(self.config.matrix.database_directory)
+        return AsyncClient(
+            self.config.matrix.homeserver,
+            self.config.matrix.user_id,
+            device_id=self.config.matrix.device_id,
+            store_path=self.config.matrix.database_directory,
+            config=client_config,
+            ssl=ssl,
+            proxy=proxy
+        )
+
+    async def start_bot(self):
+        await run(self)
+
+    def set_auto_join(
+            self,
+            *,
+            allowed_rooms: list = None,
+            allowed_users: list = None
+    ) -> None:
+        """
+        This method is used to set the auto join callback methods.
+
+        :param allowed_users: List of users which the bot will accept invites from. Format: @user_name:homeserver.org
+        :type allowed_users: list
+        :param allowed_rooms: List of rooms which the bot will accept invites for. Format: !random_id:homeserver.org
+        :type allowed_rooms: list
+        """
+        if not allowed_rooms and not allowed_users:
+            self.client.add_event_callback(auto_join(self.client), EventType.ROOM_INVITE.value)
+        else:
+            if allowed_rooms:
+                self.client.add_event_callback(
+                    apply_filter(auto_join(self.client), filter_allowed_rooms(allowed_rooms))
+                )
+            if allowed_users:
+                self.client.add_event_callback(
+                    apply_filter(auto_join(self.client), filter_allowed_users(allowed_users))
+                )
+
+    def add_coroutine_callback(self, coroutine: Coroutine) -> None:
+        """
+        This method is used to add a coroutine to the loop. Must be called before start_bot gets executed. The
+        coroutine is added after the bot has logged in.
+
+        :param coroutine: The Coroutine which will be added to the loop. Must have client, config as parameter
+        :type coroutine: Coroutine
+        """
+        self.coroutine_callbacks.append(coroutine)
 
     async def send_message(
             self,
