@@ -14,7 +14,13 @@ from hopfenmatrix.config import Config
 logger = logging.getLogger(__name__)
 
 
-async def start_bot(client: AsyncClient, config: Config, callbacks=None):
+async def start_bot(
+        client: AsyncClient,
+        config: Config,
+        callbacks=None,
+        *,
+        display_name=None
+):
     """
     This function runs a client as user in an endless loop.
 
@@ -24,6 +30,8 @@ async def start_bot(client: AsyncClient, config: Config, callbacks=None):
     :type config: Config
     :param callbacks: Async callback functions
     :type callbacks: list
+    :param display_name: Set the display name of the bot
+    :type display_name: str
     """
 
     if callbacks is None:
@@ -59,6 +67,10 @@ async def start_bot(client: AsyncClient, config: Config, callbacks=None):
 
             # Sync client first time
             await asyncio.get_event_loop().create_task(client.sync(full_state=True, timeout=30000))
+
+            # Set display name
+            if display_name:
+                await client.set_displayname(display_name)
 
             # Call all callbacks
             for callback in callbacks:
