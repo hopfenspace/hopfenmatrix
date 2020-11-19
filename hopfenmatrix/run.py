@@ -14,7 +14,7 @@ from hopfenmatrix.config import Config
 logger = logging.getLogger(__name__)
 
 
-async def run(client: AsyncClient, config: Config, callbacks: list = None):
+async def run(client: AsyncClient, config: Config, callbacks: list = []):
     """
     This function runs a client as user in an endless loop.
 
@@ -56,7 +56,7 @@ async def run(client: AsyncClient, config: Config, callbacks: list = None):
             logger.info(f"Logged in as {config.matrix.user_id}")
 
             # Sync client first time
-            asyncio.get_event_loop().run_until_complete(client.sync(full_state=True, timeout=30000))
+            await asyncio.get_event_loop().create_task(client.sync(full_state=True, timeout=30000))
 
             # Call all callbacks
             for callback in callbacks:
