@@ -77,13 +77,13 @@ def debug() -> Callback:
 # Filter #
 ##########
 
-def allowed_rooms(room_ids: List[str]) -> Filter:
+def filter_allowed_rooms(room_ids: List[str]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
         return room.room_id in room_ids
     return filter_
 
 
-def allowed_users(user_ids: List[str]) -> Filter:
+def filter_allowed_users(user_ids: List[str]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
         return event.sender in user_ids
     return filter_
