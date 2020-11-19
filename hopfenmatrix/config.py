@@ -5,6 +5,8 @@ from typing import Dict, Any
 
 from nio import AsyncClient, AsyncClientConfig
 
+from hopfenmatrix.logging import NotBelowFilter
+
 logger = logging.getLogger()
 
 
@@ -129,11 +131,13 @@ class Config(Namespace):
                 self["logging"]["file_logging"]["filepath"]
             )
             handler.setFormatter(formatter)
+            handler.addFilter(NotBelowFilter("peewee", logging.INFO))
             logger.addHandler(handler)
 
         if self["logging"]["console_logging"]["enabled"]:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
+            handler.addFilter(NotBelowFilter("peewee", logging.INFO))
             logger.addHandler(handler)
 
     def new_async_client(self, client_config: AsyncClientConfig, ssl: bool = None, proxy: str = None) -> AsyncClient:
