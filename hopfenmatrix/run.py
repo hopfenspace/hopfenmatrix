@@ -14,7 +14,7 @@ from hopfenmatrix.config import Config
 logger = logging.getLogger(__name__)
 
 
-async def run(client: AsyncClient, config: Config, callbacks: list = []):
+async def start_bot(client: AsyncClient, config: Config, callbacks: list = []):
     """
     This function runs a client as user in an endless loop.
 
