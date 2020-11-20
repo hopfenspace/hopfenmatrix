@@ -4,9 +4,9 @@ import os
 from collections import Coroutine
 
 import typing
-from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage
+from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText
 
-from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users
+from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler
 from hopfenmatrix.config import Config
 from hopfenmatrix.run import run
 
@@ -35,6 +35,8 @@ class EventType(enum.Enum):
     "This event represents the event of being invited to a room"
     ROOM_MESSAGE = RoomMessage
     "This is the event when receiving a message"
+    ROOM_MESSAGE_TEXT = RoomMessageText
+    "This is the event when a text message is received"
 
 
 class ApiWrapper:
@@ -68,6 +70,7 @@ class ApiWrapper:
         self.client = self._new_async_client()
         self.display_name = display_name
         self.coroutine_callbacks = []
+        self.command_callbacks = []
 
     def _new_async_client(
             self,
@@ -105,13 +108,14 @@ class ApiWrapper:
         )
 
     async def start_bot(self):
+        self.client.add_event_callback(command_handler(self), EventType.ROOM_MESSAGE_TEXT.value)
         await run(self)
 
     def set_auto_join(
             self,
             *,
             allowed_rooms: list = None,
-            allowed_users: list = None
+            allowed_users: list = None,
     ) -> None:
         """
         This method is used to set the auto join callback methods.
@@ -134,6 +138,17 @@ class ApiWrapper:
                     apply_filter(auto_join(self.client), filter_allowed_users(allowed_users)),
                     EventType.ROOM_INVITE.value
                 )
+
+    def register_command(self, command_callback: typing.Callable, accepted_aliases: typing.Union[list, str]):
+        """
+        This method is used to register a command.
+
+        :param command_callback: Callback to the command handler
+        :type command_callback: Callable
+        :param accepted_aliases: Aliases which will be accepted.
+        :type accepted_aliases: Union[list, str]
+        """
+        self.command_callbacks.append((command_callback, accepted_aliases))
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
         """
