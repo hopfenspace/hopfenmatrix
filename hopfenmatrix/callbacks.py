@@ -81,15 +81,17 @@ def command_handler(api) -> Callback:
         if event.sender == api.client.user:
             return
 
-        logger.debug(f"Received a message from {event.sender} in room {room.room_id}")
+        logger.debug(f"Received {msg} from {event.sender} in room {room.room_id}")
 
         # Check if command_prefix is sent or if we are in a direct chat
         if not msg.startswith(api.config.matrix.command_prefix) and len(room.users) > 2:
+            logger.debug(f"Room is not private, but no command prefix was used")
             return
 
         # Remove command prefix, leading and trailing whitespaces
         msg = msg.lstrip(api.config.matrix.command_prefix).strip()
         event.body = msg
+        logger.debug(f"Stripped command_prefix: {msg}")
 
         # Iterate over all registered command callbacks
         for command in api.command_callbacks:
@@ -98,10 +100,12 @@ def command_handler(api) -> Callback:
             if isinstance(aliases, list):
                 for alias in aliases:
                     if msg.startswith(alias):
+                        logger.info(f"Found command in msg: {msg}")
                         await command_callback(api, room, event)
                         break
             else:
                 if msg.startswith(aliases):
+                    logger.info(f"Found command in msg: {msg}")
                     await command_callback(api, room, event)
                     break
         await asyncio.sleep(0.1)
