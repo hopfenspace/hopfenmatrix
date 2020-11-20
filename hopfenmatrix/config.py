@@ -57,6 +57,7 @@ class Config(Namespace):
         self.matrix.device_id = "device0"
         self.matrix.device_name = "Some Matrix Bot"
         self.matrix.database_directory = "./store"
+        self.matrix.command_prefix = "!xyz"
 
         self.logging = Namespace()
         self.logging.level = "INFO"
