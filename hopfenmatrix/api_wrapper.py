@@ -4,7 +4,8 @@ import os
 from collections import Coroutine
 
 import typing
-from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText
+from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText, \
+    MatrixRoom
 
 from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler
 from hopfenmatrix.config import Config
@@ -169,6 +170,18 @@ class ApiWrapper:
         :type coroutine: Coroutine
         """
         self.coroutine_callbacks.append(coroutine)
+
+    async def is_room_private(self, room: MatrixRoom) -> bool:
+        """
+        This method is used to check if the given room is a private chat. As there are no such things as private chats,
+        private rooms are considered as such, if there are only 2 members, the bot and the other user.
+
+        :param room: Room object, received by the bot
+        :type room: MatrixRoom
+        :returns: True, if room is considered as private, else False
+        :rtype: bool
+        """
+        return len(room.users) <= 2
 
     async def send_message(
             self,
