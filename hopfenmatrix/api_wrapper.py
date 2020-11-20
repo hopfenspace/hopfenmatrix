@@ -261,7 +261,6 @@ class ApiWrapper:
                 }
             }
         }
-        print(content)
         await self._send(content, room.room_id)
 
     async def _send(
