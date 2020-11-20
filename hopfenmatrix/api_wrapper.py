@@ -194,7 +194,8 @@ class ApiWrapper:
     async def send_message(
             self,
             message,
-            room_id,
+            room,
+            event,
             *,
             formatted_message=None,
             send_as_notice=False
@@ -204,8 +205,10 @@ class ApiWrapper:
 
         :param message: The unformatted message to send
         :type message: str
-        :param room_id: The room_id to send the message to, can also be a list of room_ids
-        :type room_id: Union[str, list]
+        :param room: The room to send the message to, can also be a list of room_ids
+        :type room: MatrixRoom
+        :param event: Event of receiving the message
+        :type event: RoomMessageText
         :param formatted_message: The formatted message to send. If not specified the unformatted message is sent instead.
         :type formatted_message: str
         :param send_as_notice: Set to True to send messages silently.
@@ -217,11 +220,7 @@ class ApiWrapper:
             "body": message,
             "formatted_body": formatted_message if formatted_message else message
         }
-        if isinstance(room_id, list):
-            for room in room_id:
-                await self._send(content, room)
-        else:
-            await self._send(content, room_id)
+        await self._send(content, room.room_id)
 
     async def send_reply(
             self,
@@ -229,6 +228,7 @@ class ApiWrapper:
             room,
             event,
             *,
+            formatted_message=None,
             send_as_notice=False
     ) -> None:
         """
@@ -241,6 +241,8 @@ class ApiWrapper:
         :type room: MatrixRoom
         :param event: The event to reply to
         :type event: RoomMessageText
+        :param formatted_message: Formatted message to send.
+        :type formatted_message: str
         :param send_as_notice: Set True if message should be sent silently. Defaults to False.
         :type send_as_notice: bool
         """
@@ -249,7 +251,7 @@ class ApiWrapper:
         if len(event.body.split('\n')) > 1:
             fallback_body = '\n> '.join(event.body.split('\n'))
         unformatted_message = f'> <{event.sender}> {fallback_body_first}\n{fallback_body}\n{message}'
-        formatted_body = f"<mx-reply><blockquote><a href=\"https://matrix.to/#/{room.room_id}/{event.event_id}?via={room.room_id.split(':')[1]}\">In reply to</a> <a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br><br/>{event.body}</blockquote></mx-reply>{message}"
+        formatted_body = f"<mx-reply><blockquote><a href=\"https://matrix.to/#/{room.room_id}/{event.event_id}?via={room.room_id.split(':')[1]}\">In reply to</a> <a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br><br/>{event.body}</blockquote></mx-reply>{message if not formatted_message else formatted_message}"
         content = {
             "msgtype": MessageType.NOTICE.value if send_as_notice else MessageType.TEXT.value,
             "body": unformatted_message,
