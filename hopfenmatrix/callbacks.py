@@ -98,21 +98,27 @@ def command_handler(api) -> Callback:
         logger.debug(f"Stripped command_prefix: {msg}")
 
         # Iterate over all registered command callbacks
+        found = False
         for command in api.command_callbacks:
             command_callback = command[0]
             aliases = command[1]
             if isinstance(aliases, list):
                 for alias in aliases:
                     if msg.startswith(alias):
+                        found = True
                         logger.info(f"Found command in msg: {msg}")
                         await command_callback(api, room, event)
                         break
             else:
                 if msg.startswith(aliases):
                     logger.info(f"Found command in msg: {msg}")
+                    found = True
                     await command_callback(api, room, event)
                     break
-        await asyncio.sleep(0.1)
+        default_command = [x for x in api.command_callbacks if x[2]]
+        if not found and len(default_command) > 0:
+            logger.info(f"Found no command in msg, executing default command")
+            await default_command[0][0](api, room, event)
 
     return callback
 

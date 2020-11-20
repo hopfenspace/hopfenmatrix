@@ -150,7 +150,12 @@ class ApiWrapper:
                     EventType.ROOM_INVITE.value
                 )
 
-    def register_command(self, command_callback: typing.Callable, accepted_aliases: typing.Union[list, str]):
+    def register_command(
+            self,
+            command_callback: typing.Callable,
+            accepted_aliases: typing.Union[list, str],
+            make_default=False
+    ) -> None:
         """
         This method is used to register a command.
 
@@ -158,8 +163,11 @@ class ApiWrapper:
         :type command_callback: Callable
         :param accepted_aliases: Aliases which will be accepted.
         :type accepted_aliases: Union[list, str]
+        :param make_default: If specified, the registered command will behave as "default" command. So when calling the
+        bot with no or wrong parameters, this command is executed. Defaults to False
+        :type make_default: bool
         """
-        self.command_callbacks.append((command_callback, accepted_aliases))
+        self.command_callbacks.append((command_callback, accepted_aliases, make_default))
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
         """
