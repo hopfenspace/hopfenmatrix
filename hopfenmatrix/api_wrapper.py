@@ -215,7 +215,7 @@ class ApiWrapper:
             "msgtype": MessageType.NOTICE.value if send_as_notice else MessageType.TEXT.value,
             "format": "org.matrix.custom.html",
             "body": message,
-            "formatted_message": formatted_message if formatted_message else message
+            "formatted_body": formatted_message if formatted_message else message
         }
         if isinstance(room_id, list):
             for room in room_id:
