@@ -226,8 +226,8 @@ class ApiWrapper:
     async def send_reply(
             self,
             message,
-            room_id,
-            event_id_to_reply,
+            room,
+            event,
             *,
             send_as_notice=False
     ) -> None:
@@ -237,31 +237,32 @@ class ApiWrapper:
 
         :param message: Message to send in reply to another message
         :type message: str
-        :param room_id: ID of the room in which the reply should be sent in.
-        :type room_id: str
-        :param event_id_to_reply: The event id to reply to
-        :type event_id_to_reply: str
+        :param room: Room in which the reply should be sent in.
+        :type room: MatrixRoom
+        :param event: The event to reply to
+        :type event: RoomMessageText
         :param send_as_notice: Set True if message should be sent silently. Defaults to False.
         :type send_as_notice: bool
         """
-        formatted_message = """<mx-reply>
-            <blockquote>
-                <a href="https://matrix.to/#/!:./:.">In reply to</a>
-            </blockquote>
-        </mx-reply>
-        """
+        fallback_body_first = event.body.split('\n')[0]
+        fallback_body = ""
+        if len(event.body.split('\n')) > 1:
+            fallback_body = '\n> '.join(event.body.split('\n'))
+        unformatted_message = f'> <{event.sender}> {fallback_body_first}\n{fallback_body}\n{message}'
+        formatted_body = f"<mx-reply><blockquote><a href=\"https://matrix.to/#/{room.room_id}/{event.event_id}?via={room.room_id.split(':')[1]}\">In reply to</a> <a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br><br/>{event.body}</blockquote></mx-reply>{message}"
         content = {
             "msgtype": MessageType.NOTICE.value if send_as_notice else MessageType.TEXT.value,
+            "body": unformatted_message,
             "format": "org.matrix.custom.html",
-            "body": message,
-            "formatted_message": formatted_message,
+            "formatted_body": formatted_body,
             "m.relates_to": {
                 "m.in_reply_to": {
-                    "event_id": event_id_to_reply
+                    "event_id": event.event_id
                 }
             }
         }
-        await self._send(content, room_id)
+        print(content)
+        await self._send(content, room.room_id)
 
     async def _send(
             self,
