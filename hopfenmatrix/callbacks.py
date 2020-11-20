@@ -89,6 +89,7 @@ def command_handler(api) -> Callback:
 
         # Remove command prefix, leading and trailing whitespaces
         msg = msg.lstrip(api.config.matrix.command_prefix).strip()
+        event.body = msg
 
         # Iterate over all registered command callbacks
         for command in api.command_callbacks:
