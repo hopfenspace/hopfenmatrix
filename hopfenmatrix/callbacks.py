@@ -3,7 +3,7 @@ import logging
 from functools import wraps
 from typing import Callable, List
 
-from nio import MatrixRoom, Event, JoinError, AsyncClient
+from nio import MatrixRoom, Event, JoinError, AsyncClient, RoomMessageText
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,47 @@ def auto_join(client: AsyncClient,
                 break
         else:
             logger.error(f"Unable to join room: {room.room_id}")
+    return callback
+
+
+def command_handler(api) -> Callback:
+    """
+    This handler checks for commands in a received message and forwards them to their respective callback.
+
+    :param api: The ApiWrapper object
+    :type api: ApiWrapper
+    """
+    async def callback(room: MatrixRoom, event: RoomMessageText) -> None:
+        msg = event.body
+
+        # Check if the bot is the sender
+        if event.sender == api.client.user:
+            return
+
+        logger.debug(f"Received a message from {event.sender} in room {room.room_id}")
+
+        # Check if command_prefix is sent or if we are in a direct chat
+        if not msg.startswith(api.config.matrix.command_prefix) and len(room.users) > 2:
+            return
+
+        # Remove command prefix, leading and trailing whitespaces
+        msg = msg.lstrip(api.config.matrix.command_prefix).strip()
+
+        # Iterate over all registered command callbacks
+        for command in api.command_callbacks:
+            command_callback = command[0]
+            aliases = command[1]
+            if isinstance(aliases, list):
+                for alias in aliases:
+                    if msg.startswith(alias):
+                        await command_callback(api, room, event)
+                        break
+            else:
+                if msg.startswith(aliases):
+                    await command_callback(api, room, event)
+                    break
+        await asyncio.sleep(0.1)
+
     return callback
 
 
