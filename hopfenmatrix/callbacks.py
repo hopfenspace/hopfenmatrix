@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from functools import wraps
 from typing import Callable, List, Union
 
@@ -83,8 +84,11 @@ def command_handler(api) -> Callback:
 
         logger.debug(f"Received {msg} from {event.sender} in room {room.room_id}")
 
+        pattern = re.compile(r"^" + api.config.matrix.command_prefix + r"( |$)")
+        has_command_prefix = pattern.match(msg)
+
         # Check if command_prefix is sent or if we are in a direct chat
-        if not msg.startswith(api.config.matrix.command_prefix) and len(room.users) > 2:
+        if not has_command_prefix and len(room.users) > 2:
             logger.debug(f"Room is not private, but no command prefix was used")
             return
 
