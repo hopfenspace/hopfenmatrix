@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import wraps
-from typing import Callable, List
+from typing import Callable, List, Union
 
 from nio import MatrixRoom, Event, JoinError, AsyncClient, RoomMessageText
 
@@ -118,13 +118,13 @@ def debug() -> Callback:
 # Filter #
 ##########
 
-def filter_allowed_rooms(room_ids: List[str]) -> Filter:
+def filter_allowed_rooms(room_ids: Union[List[str], None]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
-        return room.room_id in room_ids
+        return room.room_id in room_ids if room_ids else True
     return filter_
 
 
-def filter_allowed_users(user_ids: List[str]) -> Filter:
+def filter_allowed_users(user_ids: Union[List[str], None]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
-        return event.sender in user_ids
+        return event.sender in user_ids if user_ids else True
     return filter_

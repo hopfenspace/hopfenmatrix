@@ -133,9 +133,19 @@ class ApiWrapper:
                     apply_filter(auto_join(self.client), filter_allowed_rooms(allowed_rooms)),
                     EventType.ROOM_INVITE.value
                 )
+            else:
+                self.client.add_event_callback(
+                    apply_filter(auto_join(self.client), filter_allowed_rooms(None)),
+                    EventType.ROOM_INVITE.value
+                )
             if allowed_users:
                 self.client.add_event_callback(
                     apply_filter(auto_join(self.client), filter_allowed_users(allowed_users)),
+                    EventType.ROOM_INVITE.value
+                )
+            else:
+                self.client.add_event_callback(
+                    apply_filter(auto_join(self.client), filter_allowed_users(None)),
                     EventType.ROOM_INVITE.value
                 )
 
