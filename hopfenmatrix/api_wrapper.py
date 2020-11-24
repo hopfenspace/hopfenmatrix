@@ -465,6 +465,30 @@ class ApiWrapper:
         }
         await self._send(content, room.room_id)
 
+    async def send_location(
+            self,
+            location_description: str,
+            location_uri: str,
+            room: MatrixRoom
+    ):
+        """
+        This method is used to send a location to a room.
+
+        :param location_description: Description of the location
+        :type location_description: str
+        :param location_uri: Geo uri
+        :type location_uri: str
+        :param room: Room to send the location to.
+        :type room: MatrixRoom
+        """
+        content = {
+            "body": location_description,
+            "format": "org.matrix.custom.html",
+            "geo_uri": location_uri,
+            "msgtype": "m.location"
+        }
+        await self._send(content, room.room_id)
+
     async def _send(
             self,
             content: dict,
