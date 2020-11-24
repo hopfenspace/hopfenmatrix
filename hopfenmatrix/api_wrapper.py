@@ -330,6 +330,39 @@ class ApiWrapper:
         }
         await self._send(content, room.room_id)
 
+    async def send_video(
+            self,
+            video_path: str,
+            room: MatrixRoom,
+            *,
+            description=None
+    ):
+        """
+        Send video to room.
+
+        :param video_path: Path to video file.
+        :type video_path: str
+        :param room: Room to send the video to.
+        :type room: MatrixRoom
+        :param description: Description of the video. If not sets defaults to filename.
+        :type description: str
+        """
+        if not description:
+            description = os.path.basename(video_path)
+        mime_type = magic.from_file(video_path, mime=True)
+        file_stat = await aiofiles.os.stat(video_path)
+        async with aiofiles.open(video_path, "r+b") as fh:
+            resp, maybe_keys = await self.client.upload(fh,
+                                                        content_type=mime_type,
+                                                        filename=os.path.basename(video_path),
+                                                        filesize=file_stat.st_size)
+        content = {
+            "body": description,
+            "msgtype": "m.video",
+            "url": resp.content_uri
+        }
+        await self._send(content, room.room_id, )
+
     async def _send(
             self,
             content: dict,
