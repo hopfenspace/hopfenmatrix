@@ -6,6 +6,7 @@ from aiohttp import ClientConnectionError, ServerDisconnectedError
 from nio import (
     LocalProtocolError,
     LoginError,
+    SyncError,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,31 +29,48 @@ async def run(
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
         try:
-            # Try to login with the configured username/password
-            try:
-                logger.info(f"Trying to log in as {api.config.matrix.user_id}")
-                login_response = await api.client.login(
-                    password=api.config.matrix.user_password, device_name=api.config.matrix.device_name,
-                )
+            if not api.client.access_token:
+                # Try to login with the configured username/password
+                try:
+                    logger.info(f"Trying to log in as {api.config.matrix.user_id}")
 
-                # Check if login failed
-                if type(login_response) == LoginError:
-                    logger.error("Failed to login: %s", login_response.message)
+                    login_response = await api.client.login(
+                        password=api.config.matrix.user_password, device_name=api.config.matrix.device_name,
+                    )
+
+                    # Check if login failed
+                    if type(login_response) == LoginError:
+                        logger.error("Failed to login: %s", login_response.message)
+                        return False
+
+                    # Writing new config_file
+                    if api.config.config_path:
+                        api.config.matrix.access_token = api.client.access_token
+                        api.config.to_json(api.config, api.config.config_path)
+                        logger.debug(f"Received access_token, write to new config file to {api.config.config_path}")
+
+                    # Login succeeded!
+                    logger.info(f"Logged in as {api.config.matrix.user_id}")
+
+                except LocalProtocolError as e:
+                    # There's an edge case here where the user hasn't installed the correct C
+                    # dependencies. In that case, a LocalProtocolError is raised on login.
+                    logger.fatal(
+                        "Failed to login. Have you installed the correct dependencies? "
+                        "https://github.com/poljar/matrix-nio#installation "
+                        "Error: %s",
+                        e,
+                    )
                     return False
-
-            except LocalProtocolError as e:
-                # There's an edge case here where the user hasn't installed the correct C
-                # dependencies. In that case, a LocalProtocolError is raised on login.
-                logger.fatal(
-                    "Failed to login. Have you installed the correct dependencies? "
-                    "https://github.com/poljar/matrix-nio#installation "
-                    "Error: %s",
-                    e,
-                )
-                return False
-
-            # Login succeeded!
-            logger.info(f"Logged in as {api.config.matrix.user_id}")
+            else:
+                logger.info(f"Trying to log in as {api.config.matrix.user_id} with stored credentials")
+                api.client.load_store()
+                resp = await api.client.sync(full_state=True, timeout=5000)
+                if isinstance(resp, SyncError):
+                    api.client.access_token = ""
+                    logger.error(f"Failed to login with stored credentials, trying to relogin with password")
+                    continue
+                logger.info(f"Logged in as {api.config.matrix.user_id}")
 
             # Sync client first time
             await asyncio.get_event_loop().create_task(api.client.sync(full_state=True, timeout=30000))
