@@ -438,6 +438,33 @@ class ApiWrapper:
         }
         await self._send(content, room.room_id)
 
+    async def send_emote(
+            self,
+            emote: str,
+            room: MatrixRoom,
+            *,
+            formatted_message: str = None
+    ):
+        """
+        This method is used to send an emote to a room.
+
+        :param emote: The emote to display.
+        :type emote: str
+        :param room: The room to send the emote to.
+        :type room: MatrixRoom
+        :param formatted_message: The HTML formatted emote.
+        :type formatted_message: str
+        """
+        if not formatted_message:
+            formatted_message = emote
+        content = {
+            "body": emote,
+            "format": "org.matrix.custom.html",
+            "formatted_body": formatted_message,
+            "msgtype": "m.emote"
+        }
+        await self._send(content, room.room_id)
+
     async def _send(
             self,
             content: dict,
