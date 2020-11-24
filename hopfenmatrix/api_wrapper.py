@@ -2,10 +2,13 @@ import enum
 import logging
 import os
 from collections import Coroutine
-
 import typing
-from nio import AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText, \
-    MatrixRoom
+
+import aiofiles.os
+from PIL import Image
+from nio import (AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText,
+                 MatrixRoom, UploadResponse)
+import magic
 
 from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler
 from hopfenmatrix.config import Config
@@ -276,6 +279,45 @@ class ApiWrapper:
                     "event_id": event.event_id
                 }
             }
+        }
+        await self._send(content, room.room_id)
+
+    async def send_image(
+            self,
+            image_path: str,
+            room: MatrixRoom
+    ):
+        """
+        Send an image to a room.
+
+        :param image_path: Path to image
+        :type image_path: str
+        :param room: Room to send the image to.
+        :type room: MatrixRoom
+        """
+        mime_type = magic.from_file(image_path, mime=True)
+        img = Image.open(image_path)
+        (width, height) = img.size
+        file_stat = await aiofiles.os.stat(image_path)
+        async with aiofiles.open(image_path, "r+b") as fh:
+            resp, maybe_keys = await self.client.upload(fh, content_type=mime_type, filename=os.path.basename(image_path), filesize=file_stat.st_size)
+        if isinstance(resp, UploadResponse):
+            logger.debug("Image was uploaded successfully to server. ")
+        else:
+            logger.warning(f"Failed to upload image. Failure response: {resp}")
+
+        content = {
+            "body": os.path.basename(image_path),
+            "info": {
+                "size": file_stat.st_size,
+                "mimetype": mime_type,
+                "thumbnail_info": None,
+                "w": width,
+                "h": height,
+                "thumbnail_url": None,
+            },
+            "msgtype": "m.image",
+            "url": resp.content_uri,
         }
         await self._send(content, room.room_id)
 
