@@ -285,7 +285,9 @@ class ApiWrapper:
     async def send_image(
             self,
             image_path: str,
-            room: MatrixRoom
+            room: MatrixRoom,
+            *,
+            description=None
     ):
         """
         Send an image to a room.
@@ -294,20 +296,27 @@ class ApiWrapper:
         :type image_path: str
         :param room: Room to send the image to.
         :type room: MatrixRoom
+        :param description: Description of the image. If not sets defaults to filename.
+        :type description: str
         """
+        if not description:
+            description = os.path.basename(image_path)
         mime_type = magic.from_file(image_path, mime=True)
         img = Image.open(image_path)
         (width, height) = img.size
         file_stat = await aiofiles.os.stat(image_path)
         async with aiofiles.open(image_path, "r+b") as fh:
-            resp, maybe_keys = await self.client.upload(fh, content_type=mime_type, filename=os.path.basename(image_path), filesize=file_stat.st_size)
+            resp, maybe_keys = await self.client.upload(fh,
+                                                        content_type=mime_type,
+                                                        filename=os.path.basename(image_path),
+                                                        filesize=file_stat.st_size)
         if isinstance(resp, UploadResponse):
             logger.debug("Image was uploaded successfully to server. ")
         else:
             logger.warning(f"Failed to upload image. Failure response: {resp}")
 
         content = {
-            "body": os.path.basename(image_path),
+            "body": description,
             "info": {
                 "size": file_stat.st_size,
                 "mimetype": mime_type,
