@@ -4,6 +4,7 @@ import os
 from collections import Coroutine
 import typing
 
+import mutagen
 import aiofiles.os
 from PIL import Image
 from nio import (AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText,
@@ -393,6 +394,46 @@ class ApiWrapper:
             "body": description,
             "filename": os.path.basename(file_path),
             "msgtype": "m.file",
+            "url": resp.content_uri
+        }
+        await self._send(content, room.room_id)
+
+    async def send_audio(
+            self,
+            audio_path,
+            room,
+            *,
+            description=None
+    ):
+        """
+        This method is used to send an audio file to a room.
+
+        :param audio_path: Path to audio file.
+        :type audio_path: str
+        :param room: Room to send the audio file to.
+        :type room: MatrixRoom
+        :param description: Description of the file.
+        :type description: str
+        """
+        if not description:
+            description = os.path.basename(audio_path)
+        mime_type = magic.from_file(audio_path, mime=True)
+        file_stat = await aiofiles.os.stat(audio_path)
+        audio = mutagen.File(audio_path)
+        duration = audio.info.length
+        async with aiofiles.open(audio_path, "r+b") as fh:
+            resp, maybe_keys = await self.client.upload(fh,
+                                                        content_type=mime_type,
+                                                        filename=os.path.basename(audio_path),
+                                                        filesize=file_stat.st_size)
+        content = {
+            "body": description,
+            "info": {
+                "duration": int(duration),
+                "mimetype": mime_type,
+                "size": file_stat.st_size
+            },
+            "msgtype": "m.audio",
             "url": resp.content_uri
         }
         await self._send(content, room.room_id)
