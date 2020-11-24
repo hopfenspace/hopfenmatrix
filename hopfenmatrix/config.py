@@ -3,8 +3,6 @@ import os.path
 import sys
 from typing import Dict, Any
 
-from nio import AsyncClient, AsyncClientConfig
-
 from hopfenmatrix.logging import NotBelowFilter
 
 logger = logging.getLogger()
@@ -140,26 +138,3 @@ class Config(Namespace):
             handler.setFormatter(formatter)
             handler.addFilter(NotBelowFilter("peewee", logging.INFO))
             logger.addHandler(handler)
-
-    def new_async_client(self, client_config: AsyncClientConfig, ssl: bool = None, proxy: str = None) -> AsyncClient:
-        """
-        Use the config values to create an AsyncClient
-
-        :param client_config: an nio config object for AsyncClient's constructor
-        :type client_config: AsyncClientConfig
-        :param ssl: flag whether to use ssl
-        :type ssl: bool
-        :param proxy: address for a proxy
-        :type proxy: str
-        :return: an AsyncClient instance
-        :rtype: AsyncClient
-        """
-        return AsyncClient(
-            self.matrix.homeserver,
-            self.matrix.user_id,
-            device_id=self.matrix.device_id,
-            store_path=self.matrix.database_directory,
-            config=client_config,
-            ssl=ssl,
-            proxy=proxy
-        )
