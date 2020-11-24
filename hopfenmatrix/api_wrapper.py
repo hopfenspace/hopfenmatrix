@@ -98,7 +98,8 @@ class ApiWrapper:
             )
         if not os.path.isdir(self.config.matrix.database_directory):
             os.mkdir(self.config.matrix.database_directory)
-        return AsyncClient(
+
+        client = AsyncClient(
             self.config.matrix.homeserver,
             self.config.matrix.user_id,
             device_id=self.config.matrix.device_id,
@@ -107,6 +108,12 @@ class ApiWrapper:
             ssl=ssl,
             proxy=proxy
         )
+
+        if self.config.matrix.access_token:
+            client.access_token = self.config.matrix.access_token
+            client.user_id = self.config.matrix.user_id
+
+        return client
 
     async def start_bot(self):
         self.client.add_event_callback(command_handler(self), EventType.ROOM_MESSAGE_TEXT.value)
