@@ -363,6 +363,40 @@ class ApiWrapper:
         }
         await self._send(content, room.room_id, )
 
+    async def send_file(
+            self,
+            file_path: str,
+            room: MatrixRoom,
+            *,
+            description=None
+    ):
+        """
+        This method is used to send a file to a room.
+
+        :param file_path: Path to file.
+        :type file_path: str
+        :param room: Room to send the file to.
+        :type room: MatrixRoom
+        :param description: Description of the file.
+        :type description: str
+        """
+        if not description:
+            description = os.path.basename(file_path)
+        mime_type = magic.from_file(file_path, mime=True)
+        file_stat = await aiofiles.os.stat(file_path)
+        async with aiofiles.open(file_path, "r+b") as fh:
+            resp, maybe_keys = await self.client.upload(fh,
+                                                        content_type=mime_type,
+                                                        filename=os.path.basename(file_path),
+                                                        filesize=file_stat.st_size)
+        content = {
+            "body": description,
+            "filename": os.path.basename(file_path),
+            "msgtype": "m.file",
+            "url": resp.content_uri
+        }
+        await self._send(content, room.room_id)
+
     async def _send(
             self,
             content: dict,
