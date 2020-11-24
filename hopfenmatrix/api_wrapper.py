@@ -116,6 +116,9 @@ class ApiWrapper:
         return client
 
     async def start_bot(self):
+        """
+        Use this method for starting the bot.
+        """
         self.client.add_event_callback(command_handler(self), EventType.ROOM_MESSAGE_TEXT.value)
         await run(self)
 
@@ -185,6 +188,10 @@ class ApiWrapper:
         :type coroutine: Coroutine
         """
         self.coroutine_callbacks.append(coroutine)
+
+################
+# Client calls #
+################
 
     async def is_room_private(self, room: MatrixRoom) -> bool:
         """
