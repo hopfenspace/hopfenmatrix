@@ -3,6 +3,7 @@ import os.path
 import sys
 from typing import Dict, Any
 
+import json
 from hopfenmatrix.logging import NotBelowFilter
 
 logger = logging.getLogger()
@@ -54,6 +55,7 @@ class Config(Namespace):
         self.matrix.homeserver = "https://example.org"
         self.matrix.device_id = "device0"
         self.matrix.device_name = "Some Matrix Bot"
+        self.matrix.access_token = ""
         self.matrix.database_directory = "./store"
         self.matrix.command_prefix = "!xyz"
 
@@ -98,14 +100,27 @@ class Config(Namespace):
         :return: config instance
         :rtype: Config
         """
-        import json
         if not os.path.exists(config_file):
             with open(config_file, "w") as fh:
                 json.dump(cls(), fh, indent=2)
                 raise ConfigError(f"{config_file} not found, generated template")
         with open(config_file) as f:
             dct = json.load(f)
+        cls.config_path = config_file
         return cls.from_dict(dct, setup_logging)
+
+    @classmethod
+    def to_json(cls, config: "Config", config_file: str):
+        """
+        Dump a Config to a specified path as json.
+
+        :param config: Existing Config object
+        :type config: Config
+        :param config_file: Path to json file
+        :type config_file: str
+        """
+        with open(config_file, "w") as fh:
+            json.dump(config, fh, indent=2)
 
     @staticmethod
     def _update(dct, dct2):
