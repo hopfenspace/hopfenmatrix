@@ -212,8 +212,7 @@ class ApiWrapper:
     async def send_message(
             self,
             message,
-            room,
-            event,
+            room_id,
             *,
             formatted_message=None,
             send_as_notice=False
@@ -223,10 +222,8 @@ class ApiWrapper:
 
         :param message: The unformatted message to send
         :type message: str
-        :param room: The room to send the message to, can also be a list of room_ids
-        :type room: MatrixRoom
-        :param event: Event of receiving the message
-        :type event: RoomMessageText
+        :param room_id: The room to send the message to, can also be a list of room_ids
+        :type room_id: MatrixRoom
         :param formatted_message: The formatted message to send. If not specified the unformatted message is sent instead.
         :type formatted_message: str
         :param send_as_notice: Set to True to send messages silently.
@@ -238,7 +235,7 @@ class ApiWrapper:
             "body": message,
             "formatted_body": formatted_message if formatted_message else message
         }
-        await self._send(content, room.room_id)
+        await self._send(content, room_id)
 
     async def send_reply(
             self,
