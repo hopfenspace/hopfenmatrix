@@ -58,6 +58,7 @@ class Config(Namespace):
         self.matrix.access_token = ""
         self.matrix.database_directory = "./store"
         self.matrix.command_prefix = "!xyz"
+        self.matrix.bot_description = "This is a friendly matrix bot!"
 
         self.logging = Namespace()
         self.logging.level = "INFO"
