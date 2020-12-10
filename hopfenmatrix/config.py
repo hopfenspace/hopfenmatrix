@@ -65,7 +65,7 @@ class Config(Namespace):
         self.logging.format = "%(asctime)s | %(name)s [%(levelname)s] %(message)s"
 
         self.logging.file_logging = Namespace()
-        self.logging.file_logging.enabled = False
+        self.logging.file_logging.enabled = True
         self.logging.file_logging.filepath = "bot.log"
 
         self.logging.console_logging = Namespace()
