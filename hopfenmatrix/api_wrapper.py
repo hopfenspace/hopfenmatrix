@@ -11,7 +11,8 @@ from nio import (AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEve
                  MatrixRoom, UploadResponse)
 import magic
 
-from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler
+from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler, \
+    help_command_callback
 from hopfenmatrix.config import Config
 from hopfenmatrix.run import run
 
@@ -54,11 +55,12 @@ class ApiWrapper:
     is used
     :type config: Config
     :param config_path: Path to the configuration file. If not existent, the default configuration will be created.
-    Defaults to config.json
+    Defaults to config_old.json
     :type config_path: str
     :param config_class: Config class. Will be loaded or generated from config_path
     :type config_class: typing.Type[Config]
     """
+
     def __init__(
             self, *,
             display_name: str = None,
@@ -96,7 +98,7 @@ class ApiWrapper:
         if not client_config:
             client_config = AsyncClientConfig(
                 max_limit_exceeded=0,
-                max_timeouts=0,
+                max_timeouts=2,
                 store_sync_tokens=True,
                 encryption_enabled=True,
             )
@@ -123,6 +125,16 @@ class ApiWrapper:
         """
         Use this method for starting the bot.
         """
+        if self.command_callbacks:
+            aliases = []
+            for x in [x[1] for x in self.command_callbacks]:
+                if isinstance(x, list):
+                    for y in x:
+                        aliases.append(y)
+                else:
+                    aliases.append(x)
+            if "help" not in aliases:
+                self.register_command(help_command_callback(), accepted_aliases="help", description="Print help page")
         self.client.add_event_callback(command_handler(self), EventType.ROOM_MESSAGE_TEXT.value)
         await run(self)
 
@@ -168,6 +180,7 @@ class ApiWrapper:
             self,
             command_callback: typing.Callable,
             accepted_aliases: typing.Union[list, str],
+            description: str = "",
             make_default=False
     ) -> None:
         """
@@ -177,11 +190,13 @@ class ApiWrapper:
         :type command_callback: Callable
         :param accepted_aliases: Aliases which will be accepted.
         :type accepted_aliases: Union[list, str]
+        :param description: A short description of the command, used in automatically generated help command
+        :type description: str
         :param make_default: If specified, the registered command will behave as "default" command. So when calling the
         bot with no or wrong parameters, this command is executed. Defaults to False
         :type make_default: bool
         """
-        self.command_callbacks.append((command_callback, accepted_aliases, make_default))
+        self.command_callbacks.append((command_callback, accepted_aliases, make_default, description))
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
         """
@@ -193,9 +208,9 @@ class ApiWrapper:
         """
         self.coroutine_callbacks.append(coroutine)
 
-################
-# Client calls #
-################
+    ################
+    # Client calls #
+    ################
 
     async def is_room_private(self, room: MatrixRoom) -> bool:
         """
