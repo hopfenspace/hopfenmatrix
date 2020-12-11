@@ -68,6 +68,25 @@ def auto_join(client: AsyncClient,
     return callback
 
 
+def help_command_callback():
+    """
+    This message is a callback command for generating a default help command
+    """
+    async def callback(api, room, event):
+        if event.sender == api.client.user:
+            return
+
+        message = f"{api.config.matrix.bot_description}\n\n"
+        formatted_message = f"{api.config.matrix.bot_description}<br><br>"
+        for command in api.command_callbacks:
+            aliases = command[1]
+            description = command[3]
+            message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}: {description}\n"
+            formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else ', '.join(aliases)}</code>: {description}<br>"
+        await api.send_message(message, room.room_id, formatted_message=formatted_message)
+    return callback
+
+
 def command_handler(api) -> Callback:
     """
     This handler checks for commands in a received message and forwards them to their respective callback.
