@@ -1,13 +1,13 @@
 import asyncio
 import logging
 import re
+import html
 from functools import wraps
 from typing import Callable, List, Union
 
 from nio import MatrixRoom, Event, JoinError, AsyncClient, RoomMessageText
 
 logger = logging.getLogger(__name__)
-
 
 Callback = Callable[[MatrixRoom, Event], None]
 Filter = Callable[[MatrixRoom, Event], bool]
@@ -21,8 +21,12 @@ class CommandCallback:
     :type command_callback: Callable
     :param accepted_aliases: Aliases the command accepts
     :type accepted_aliases: list[str], str
+    :param alias_is_regex: Specify True, if the aliases are regexes
+    :type alias_is_regex: bool
     :param make_default: Make this command default, if prefix was found and no other alias matches. Defaults to false
     :type make_default: bool
+    :param command_syntax: The syntax of the command, without the alias
+    :type command_syntax: str
     :param description: Description of the command.
     :type description: str
     """
@@ -30,12 +34,18 @@ class CommandCallback:
             self,
             command_callback: Callable,
             accepted_aliases: Union[list[str], str],
+            *,
+            alias_is_regex: bool = False,
             make_default: bool = False,
+            command_syntax: str = "",
             description: str = ""
     ):
         self.command_callback = command_callback
-        self.accepted_aliases = accepted_aliases
+        self.accepted_aliases = accepted_aliases[0] \
+            if isinstance(accepted_aliases, list) and len(accepted_aliases) == 1 else accepted_aliases
+        self.alias_is_regex = alias_is_regex
         self.make_default = make_default
+        self.command_syntax = command_syntax
         self.description = description
 
 
@@ -54,10 +64,12 @@ def apply_filter(callback: Callback,
     :return: filtered callback function
     :rtype: Callable[[MatrixRoom, Event], None]
     """
+
     @wraps(callback)
     async def new_callback(room: MatrixRoom, event: Event) -> None:
         if filter_(room, event):
             await callback(room, event)
+
     return new_callback
 
 
@@ -80,7 +92,7 @@ def auto_join(client: AsyncClient,
         logger.info(f"Got invite to {room.room_id} from {event.sender}.")
 
         # Attempt to join 3 times before giving up
-        for attempt in range(1, retries+1):
+        for attempt in range(1, retries + 1):
             await asyncio.sleep(1)
             result = await client.join(room.room_id)
             if isinstance(result, JoinError):
@@ -91,6 +103,7 @@ def auto_join(client: AsyncClient,
                 break
         else:
             logger.error(f"Unable to join room: {room.room_id}")
+
     return callback
 
 
@@ -106,10 +119,14 @@ def help_command_callback():
         formatted_message = f"{api.config.matrix.bot_description}<br><br>"
         for command in api.command_callbacks:
             aliases = command.accepted_aliases
+            syntax = command.command_syntax
             description = command.description
-            message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}: {description}\n"
-            formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else ', '.join(aliases)}</code>: {description}<br>"
+            message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}" \
+                       f"{(' ' + syntax) if syntax else ''}: {description}\n"
+            formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else '<'+', '.join(aliases)+'>'}"\
+                                 f"{(' ' + html.escape(syntax)) if syntax else ''}</code>: {description}<br>"
         await api.send_message(message, room.room_id, formatted_message=formatted_message)
+
     return callback
 
 
@@ -128,7 +145,6 @@ def command_handler(api) -> Callback:
             return
 
         logger.debug(f"Received {msg} from {event.sender} in room {room.room_id}")
-
         pattern = re.compile(r"^" + api.config.matrix.command_prefix + r"( |$)")
         has_command_prefix = pattern.match(msg)
 
@@ -140,7 +156,23 @@ def command_handler(api) -> Callback:
         # Remove command prefix, leading and trailing whitespaces
         msg = msg.lstrip(api.config.matrix.command_prefix).strip()
         event.stripped_body = msg
-        logger.debug(f"Stripped command_prefix: {msg}")
+        if event.body != event.stripped_body:
+            logger.debug(f"Stripped command_prefix: {msg}")
+
+        # method for finding commands
+        async def find_command(message: str) -> bool:
+            if command.alias_is_regex:
+                alias_pattern = re.compile(message)
+                if alias_pattern.findall(msg):
+                    logger.info(f"Found command in msg: {msg}")
+                    await command_callback(api, room, event)
+                    return True
+            else:
+                if msg.startswith(message):
+                    logger.info(f"Found command in msg: {msg}")
+                    await command_callback(api, room, event)
+                    return True
+            return False
 
         # Iterate over all registered command callbacks
         found = False
@@ -149,17 +181,14 @@ def command_handler(api) -> Callback:
             aliases = command.accepted_aliases
             if isinstance(aliases, list):
                 for alias in aliases:
-                    if msg.startswith(alias):
-                        found = True
-                        logger.info(f"Found command in msg: {msg}")
-                        await command_callback(api, room, event)
+                    found = await find_command(alias)
+                    if found:
                         break
             else:
-                if msg.startswith(aliases):
-                    logger.info(f"Found command in msg: {msg}")
-                    found = True
-                    await command_callback(api, room, event)
+                found = await find_command(aliases)
+                if found:
                     break
+
         default_command = [x for x in api.command_callbacks if x.make_default]
         if not found and len(default_command) > 0:
             logger.info(f"Found no command in msg, executing default command")
@@ -171,6 +200,7 @@ def command_handler(api) -> Callback:
 def debug() -> Callback:
     async def callback(room: MatrixRoom, event: Event) -> None:
         logger.debug(f"Received event: {repr(event)}")
+
     return callback
 
 
@@ -181,10 +211,12 @@ def debug() -> Callback:
 def filter_allowed_rooms(room_ids: Union[List[str], None]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
         return room.room_id in room_ids if room_ids else True
+
     return filter_
 
 
 def filter_allowed_users(user_ids: Union[List[str], None]) -> Filter:
     def filter_(room: MatrixRoom, event: Event) -> bool:
         return event.sender in user_ids if user_ids else True
+
     return filter_

@@ -134,7 +134,11 @@ class MatrixBot:
                 else:
                     aliases.append(x)
             if "help" not in aliases:
-                self.register_command(help_command_callback(), accepted_aliases="help", description="Print help page")
+                self.register_command(
+                    help_command_callback(),
+                    accepted_aliases="help",
+                    description="Prints the help page"
+                )
         self.client.add_event_callback(command_handler(self), EventType.ROOM_MESSAGE_TEXT.value)
         await run(self)
 
@@ -180,7 +184,10 @@ class MatrixBot:
             self,
             command_callback: typing.Callable,
             accepted_aliases: typing.Union[list, str],
+            *,
+            alias_is_regex: bool = False,
             description: str = "",
+            command_syntax: str = "",
             make_default: bool = False
     ) -> None:
         """
@@ -190,13 +197,24 @@ class MatrixBot:
         :type command_callback: Callable
         :param accepted_aliases: Aliases which will be accepted.
         :type accepted_aliases: Union[list, str]
+        :param alias_is_regex: Specify true, if the aliases are should be regexes
+        :type alias_is_regex: bool
         :param description: A short description of the command, used in automatically generated help command
         :type description: str
+        :param command_syntax: The syntax of the command, without the alias
+        :type command_syntax: str
         :param make_default: If specified, the registered command will behave as "default" command. So when calling the
         bot with no or wrong parameters, this command is executed. Defaults to False
         :type make_default: bool
         """
-        cmd = CommandCallback(command_callback, accepted_aliases, make_default, description)
+        cmd = CommandCallback(
+            command_callback,
+            accepted_aliases,
+            alias_is_regex=alias_is_regex,
+            make_default=make_default,
+            command_syntax=command_syntax,
+            description=description
+        )
         self.command_callbacks.append(cmd)
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
@@ -264,7 +282,7 @@ class MatrixBot:
     ) -> None:
         """
         This method is used to allow the user to make a rich reply to another message.
-        For further information see: https://matrix.org/docs/spec/client_server/r0.6.1#rich-replies
+        For further information see: https://matrix.org/docs/spec/client_server/r0.6.11#rich-replies
 
         :param message: Message to send in reply to another message
         :type message: str
