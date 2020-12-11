@@ -71,7 +71,7 @@ class EventType(enum.Enum):
     "This is the event when a text message is received"
 
 
-class ApiWrapper:
+class MatrixBot:
     """
     This class is used to wrap common functions of the API.
 
