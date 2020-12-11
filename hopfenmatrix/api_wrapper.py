@@ -19,6 +19,32 @@ from hopfenmatrix.run import run
 logger = logging.getLogger(__name__)
 
 
+class CommandCallback:
+    """
+    This class represents a command callback.
+
+    :param command_callback: This represents Callable
+    :type command_callback: Callable
+    :param accepted_aliases: Aliases the command accepts
+    :type accepted_aliases: Union[list[str], str]
+    :param make_default: Make this command default, if prefix was found and no other alias matches. Defaults to false
+    :type make_default: bool
+    :param description: Description of the command.
+    :type description: str
+    """
+    def __init__(
+            self,
+            command_callback: typing.Callable,
+            accepted_aliases: typing.Union[list[str], str],
+            make_default: bool = False,
+            description: str = ""
+    ):
+        self.command_callback = command_callback
+        self.accepted_aliases = accepted_aliases
+        self.make_default = make_default
+        self.description = description
+
+
 class MessageType(enum.Enum):
     """
     This class is used to map message types in python.
@@ -127,7 +153,7 @@ class ApiWrapper:
         """
         if self.command_callbacks:
             aliases = []
-            for x in [x[1] for x in self.command_callbacks]:
+            for x in [x.accepted_aliases for x in self.command_callbacks]:
                 if isinstance(x, list):
                     for y in x:
                         aliases.append(y)
@@ -181,7 +207,7 @@ class ApiWrapper:
             command_callback: typing.Callable,
             accepted_aliases: typing.Union[list, str],
             description: str = "",
-            make_default=False
+            make_default: bool = False
     ) -> None:
         """
         This method is used to register a command.
@@ -196,7 +222,8 @@ class ApiWrapper:
         bot with no or wrong parameters, this command is executed. Defaults to False
         :type make_default: bool
         """
-        self.command_callbacks.append((command_callback, accepted_aliases, make_default, description))
+        cmd = CommandCallback(command_callback, accepted_aliases, make_default, description)
+        self.command_callbacks.append(cmd)
 
     def add_coroutine_callback(self, coroutine: Coroutine) -> None:
         """

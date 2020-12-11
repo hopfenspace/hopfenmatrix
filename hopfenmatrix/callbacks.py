@@ -79,8 +79,8 @@ def help_command_callback():
         message = f"{api.config.matrix.bot_description}\n\n"
         formatted_message = f"{api.config.matrix.bot_description}<br><br>"
         for command in api.command_callbacks:
-            aliases = command[1]
-            description = command[3]
+            aliases = command.accepted_aliases
+            description = command.description
             message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}: {description}\n"
             formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else ', '.join(aliases)}</code>: {description}<br>"
         await api.send_message(message, room.room_id, formatted_message=formatted_message)
@@ -119,8 +119,8 @@ def command_handler(api) -> Callback:
         # Iterate over all registered command callbacks
         found = False
         for command in api.command_callbacks:
-            command_callback = command[0]
-            aliases = command[1]
+            command_callback = command.command_callback
+            aliases = command.accepted_aliases
             if isinstance(aliases, list):
                 for alias in aliases:
                     if msg.startswith(alias):
@@ -134,7 +134,7 @@ def command_handler(api) -> Callback:
                     found = True
                     await command_callback(api, room, event)
                     break
-        default_command = [x for x in api.command_callbacks if x[2]]
+        default_command = [x for x in api.command_callbacks if x.make_default]
         if not found and len(default_command) > 0:
             logger.info(f"Found no command in msg, executing default command")
             await default_command[0][0](api, room, event)
