@@ -12,37 +12,11 @@ from nio import (AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEve
 import magic
 
 from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler, \
-    help_command_callback
+    help_command_callback, CommandCallback
 from hopfenmatrix.config import Config
 from hopfenmatrix.run import run
 
 logger = logging.getLogger(__name__)
-
-
-class CommandCallback:
-    """
-    This class represents a command callback.
-
-    :param command_callback: This represents Callable
-    :type command_callback: Callable
-    :param accepted_aliases: Aliases the command accepts
-    :type accepted_aliases: Union[list[str], str]
-    :param make_default: Make this command default, if prefix was found and no other alias matches. Defaults to false
-    :type make_default: bool
-    :param description: Description of the command.
-    :type description: str
-    """
-    def __init__(
-            self,
-            command_callback: typing.Callable,
-            accepted_aliases: typing.Union[list[str], str],
-            make_default: bool = False,
-            description: str = ""
-    ):
-        self.command_callback = command_callback
-        self.accepted_aliases = accepted_aliases
-        self.make_default = make_default
-        self.description = description
 
 
 class MessageType(enum.Enum):

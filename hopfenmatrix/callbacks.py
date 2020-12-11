@@ -13,6 +13,32 @@ Callback = Callable[[MatrixRoom, Event], None]
 Filter = Callable[[MatrixRoom, Event], bool]
 
 
+class CommandCallback:
+    """
+    This class represents a command callback.
+
+    :param command_callback: This represents Callable
+    :type command_callback: Callable
+    :param accepted_aliases: Aliases the command accepts
+    :type accepted_aliases: list[str], str
+    :param make_default: Make this command default, if prefix was found and no other alias matches. Defaults to false
+    :type make_default: bool
+    :param description: Description of the command.
+    :type description: str
+    """
+    def __init__(
+            self,
+            command_callback: Callable,
+            accepted_aliases: Union[list[str], str],
+            make_default: bool = False,
+            description: str = ""
+    ):
+        self.command_callback = command_callback
+        self.accepted_aliases = accepted_aliases
+        self.make_default = make_default
+        self.description = description
+
+
 def apply_filter(callback: Callback,
                  filter_: Filter
                  ) -> Callback:
