@@ -78,7 +78,8 @@ class MatrixBot:
         else:
             self.config = Config().from_json(config_path)
         self.client = self._new_async_client()
-        self.display_name = display_name
+        if display_name:
+            self.config.matrix.display_name = display_name
         self.enable_initial_info = enable_initial_info
         self.coroutine_callbacks = []
         self.command_callbacks = []

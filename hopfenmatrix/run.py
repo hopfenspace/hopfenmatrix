@@ -76,8 +76,8 @@ async def run(
             await asyncio.get_event_loop().create_task(api.client.sync(full_state=True, timeout=30000))
 
             # Set display name
-            if api.display_name:
-                await api.client.set_displayname(api.display_name)
+            if api.config.matrix.display_name:
+                await api.client.set_displayname(api.config.matrix.display_name)
 
             # Call all callbacks
             for callback in callbacks:
