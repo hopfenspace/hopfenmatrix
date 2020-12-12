@@ -76,6 +76,7 @@ def apply_filter(callback: Callback,
 ############
 # Callback #
 ############
+
 async def _send_help(api, room, event):
     message = f"{api.config.matrix.bot_description}\n\n"
     formatted_message = f"{api.config.matrix.bot_description}<br><br>"
@@ -93,7 +94,7 @@ async def _send_help(api, room, event):
 def auto_join(
         api,
         retries: int = 3
-    ) -> Callback:
+) -> Callback:
     """
     Create a callback which joins the room the event came from.
 
@@ -153,7 +154,6 @@ def command_handler(api) -> Callback:
         # Check if the bot is the sender
         if event.sender == api.client.user:
             return
-
         logger.debug(f"Received {msg} from {event.sender} in room {room.room_id}")
         pattern = re.compile(r"^" + api.config.matrix.command_prefix + r"( |$)")
         has_command_prefix = pattern.match(msg)
