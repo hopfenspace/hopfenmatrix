@@ -260,8 +260,8 @@ class MatrixBot:
 
         :param message: The unformatted message to send
         :type message: str
-        :param room_id: The room to send the message to, can also be a list of room_ids
-        :type room_id: MatrixRoom
+        :param room_id: The room to send the message to
+        :type room_id: str
         :param formatted_message: The formatted message to send. If not specified the unformatted message is sent instead.
         :type formatted_message: str
         :param send_as_notice: Set to True to send messages silently.
@@ -278,7 +278,7 @@ class MatrixBot:
     async def send_reply(
             self,
             message,
-            room,
+            room_id,
             event,
             *,
             formatted_message=None,
@@ -290,8 +290,8 @@ class MatrixBot:
 
         :param message: Message to send in reply to another message
         :type message: str
-        :param room: Room in which the reply should be sent in.
-        :type room: MatrixRoom
+        :param room_id: Room in which the reply should be sent in.
+        :type room_id: str
         :param event: The event to reply to
         :type event: RoomMessageText
         :param formatted_message: Formatted message to send.
@@ -304,7 +304,7 @@ class MatrixBot:
         if len(event.body.split('\n')) > 1:
             fallback_body = '\n> '.join(event.body.split('\n'))
         unformatted_message = f'> <{event.sender}> {fallback_body_first}\n{fallback_body}\n{message}'
-        formatted_body = f"<mx-reply><blockquote><a href=\"https://matrix.to/#/{room.room_id}/{event.event_id}?via={room.room_id.split(':')[1]}\">In reply to</a> <a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br><br/>{event.body}</blockquote></mx-reply>{message if not formatted_message else formatted_message}"
+        formatted_body = f"<mx-reply><blockquote><a href=\"https://matrix.to/#/{room_id}/{event.event_id}?via={room_id.split(':')[1]}\">In reply to</a> <a href=\"https://matrix.to/#/{event.sender}\">{event.sender}</a><br><br/>{event.body}</blockquote></mx-reply>{message if not formatted_message else formatted_message}"
         content = {
             "msgtype": MessageType.NOTICE.value if send_as_notice else MessageType.TEXT.value,
             "body": unformatted_message,
@@ -316,7 +316,7 @@ class MatrixBot:
                 }
             }
         }
-        await self._send(content, room.room_id)
+        await self._send(content, room_id)
 
     async def send_image(
             self,
