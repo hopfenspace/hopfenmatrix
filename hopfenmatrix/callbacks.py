@@ -5,7 +5,7 @@ import html
 from functools import wraps
 from typing import Callable, List, Union
 
-from nio import MatrixRoom, Event, JoinError, AsyncClient, RoomMessageText
+from nio import MatrixRoom, Event, JoinError, RoomMessageText
 
 logger = logging.getLogger(__name__)
 
@@ -76,33 +76,54 @@ def apply_filter(callback: Callback,
 ############
 # Callback #
 ############
-def auto_join(client: AsyncClient,
-              retries: int = 3
-              ) -> Callback:
+async def _send_help(api, room, event):
+    message = f"{api.config.matrix.bot_description}\n\n"
+    formatted_message = f"{api.config.matrix.bot_description}<br><br>"
+    for command in api.command_callbacks:
+        aliases = command.accepted_aliases
+        syntax = command.command_syntax
+        description = command.description
+        message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}" \
+                   f"{(' ' + syntax) if syntax else ''}: {description}\n"
+        formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else '<' + ', '.join(aliases) + '>'}" \
+                             f"{(' ' + html.escape(syntax)) if syntax else ''}</code>: {description}<br>"
+    await api.send_message(message, room.room_id, formatted_message=formatted_message)
+
+
+def auto_join(
+        api,
+        retries: int = 3
+    ) -> Callback:
     """
     Create a callback which joins the room the event came from.
 
-    :param client: the client to join with
-    :type client: AsyncClient
+    :param api: Api object
+    :type api: MatrixBot
     :param retries: the number of times to retry, if the joining fails
     :type retries: int
     :return: a callback
     """
     async def callback(room: MatrixRoom, event: Event) -> None:
-        logger.info(f"Got invite to {room.room_id} from {event.sender}.")
+        if event.membership == "join":
+            logger.info(f"Got invite to {room.room_id} from {event.sender}.")
 
-        # Attempt to join 3 times before giving up
-        for attempt in range(1, retries + 1):
-            await asyncio.sleep(1)
-            result = await client.join(room.room_id)
-            if isinstance(result, JoinError):
-                logger.error(
-                    f"Error joining room {room.room_id} (attempt {attempt}/{retries}): {result.message}"
-                )
+            # Attempt to join 3 times before giving up
+            for attempt in range(1, retries + 1):
+                await asyncio.sleep(1)
+                result = await api.client.join(room.room_id)
+                if isinstance(result, JoinError):
+                    logger.error(
+                        f"Error joining room {room.room_id} (attempt {attempt}/{retries}): {result.message}"
+                    )
+                else:
+                    break
             else:
-                break
-        else:
-            logger.error(f"Unable to join room: {room.room_id}")
+                logger.error(f"Unable to join room: {room.room_id}")
+        elif event.membership == "invite":
+            if api.enable_initial_info:
+                logger.info(f"Joined room {room.room_id}, enable_initial_info is configured, sending initial info")
+                await api.client.sync(full_state=True)
+                await _send_help(api, room, event)
 
     return callback
 
@@ -114,18 +135,7 @@ def help_command_callback():
     async def callback(api, room, event):
         if event.sender == api.client.user:
             return
-
-        message = f"{api.config.matrix.bot_description}\n\n"
-        formatted_message = f"{api.config.matrix.bot_description}<br><br>"
-        for command in api.command_callbacks:
-            aliases = command.accepted_aliases
-            syntax = command.command_syntax
-            description = command.description
-            message += f"\t- {aliases if isinstance(aliases, str) else ', '.join(aliases)}" \
-                       f"{(' ' + syntax) if syntax else ''}: {description}\n"
-            formatted_message += f"&emsp;- <code>{aliases if isinstance(aliases, str) else '<'+', '.join(aliases)+'>'}"\
-                                 f"{(' ' + html.escape(syntax)) if syntax else ''}</code>: {description}<br>"
-        await api.send_message(message, room.room_id, formatted_message=formatted_message)
+        await _send_help(api, room, event)
 
     return callback
 

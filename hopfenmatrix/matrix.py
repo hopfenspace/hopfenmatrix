@@ -51,6 +51,8 @@ class MatrixBot:
 
     :param display_name: Set the display name of the bot.
     :type display_name: str
+    :param enable_initial_info: Specify True if the bot should send an info message when entering a room.
+    :type enable_initial_info: bool
     :param config: This config is used instead of generating or loading one. If not specified, the default configuration
     is used
     :type config: Config
@@ -64,6 +66,7 @@ class MatrixBot:
     def __init__(
             self, *,
             display_name: str = None,
+            enable_initial_info: bool = False,
             config: Config = None,
             config_path: str = "config.json",
             config_class: typing.Type[Config] = None
@@ -76,6 +79,7 @@ class MatrixBot:
             self.config = Config().from_json(config_path)
         self.client = self._new_async_client()
         self.display_name = display_name
+        self.enable_initial_info = enable_initial_info
         self.coroutine_callbacks = []
         self.command_callbacks = []
 
@@ -157,26 +161,26 @@ class MatrixBot:
         :type allowed_rooms: list
         """
         if not allowed_rooms and not allowed_users:
-            self.client.add_event_callback(auto_join(self.client), EventType.ROOM_INVITE.value)
+            self.client.add_event_callback(auto_join(self), EventType.ROOM_INVITE.value)
         else:
             if allowed_rooms:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_rooms(allowed_rooms)),
+                    apply_filter(auto_join(self), filter_allowed_rooms(allowed_rooms)),
                     EventType.ROOM_INVITE.value
                 )
             else:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_rooms(None)),
+                    apply_filter(auto_join(self), filter_allowed_rooms(None)),
                     EventType.ROOM_INVITE.value
                 )
             if allowed_users:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_users(allowed_users)),
+                    apply_filter(auto_join(self), filter_allowed_users(allowed_users)),
                     EventType.ROOM_INVITE.value
                 )
             else:
                 self.client.add_event_callback(
-                    apply_filter(auto_join(self.client), filter_allowed_users(None)),
+                    apply_filter(auto_join(self), filter_allowed_users(None)),
                     EventType.ROOM_INVITE.value
                 )
 
