@@ -74,7 +74,7 @@ class MatrixBot:
         if config:
             self.config = config
         elif config_class:
-            self.config = config.from_json(config_path)
+            self.config = config_class.from_json(config_path)
         else:
             self.config = Config().from_json(config_path)
         self.client = self._new_async_client()
