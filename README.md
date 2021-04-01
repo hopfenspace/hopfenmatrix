@@ -32,3 +32,9 @@ python3 -m pip install -U hopfenmatrix
 pacman -S libolm python python-pip gcc
 python -m pip install -U hopfenmatrix
 ```
+
+### Fedora 30 and above
+```
+dnf install python3-pip python3-devel libolm libolm-devel gcc
+python3 -m pip install -U hopfenmatrix
+```
