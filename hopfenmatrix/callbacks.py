@@ -33,7 +33,7 @@ class CommandCallback:
     def __init__(
             self,
             command_callback: Callable,
-            accepted_aliases: Union[list[str], str],
+            accepted_aliases: Union[List[str], str],
             *,
             alias_is_regex: bool = False,
             make_default: bool = False,
