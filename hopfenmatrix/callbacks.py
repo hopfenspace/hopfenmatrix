@@ -202,7 +202,7 @@ def command_handler(api) -> Callback:
         default_command = [x for x in api.command_callbacks if x.make_default]
         if not found and len(default_command) > 0:
             logger.info(f"Found no command in msg, executing default command")
-            await default_command[0][0](api, room, event)
+            await default_command[0].command_callback(api, room, event)
 
     return callback
 
