@@ -63,6 +63,9 @@ async def run(
                     )
                     return False
             else:
+                logger.warning("As the access_token isn't working right now, logging in with password")
+                api.client.access_token = ""
+                continue
                 logger.info(f"Trying to log in as {api.config.matrix.user_id} with stored credentials")
                 api.client.load_store()
                 resp = await api.client.sync(full_state=True, timeout=5000)
