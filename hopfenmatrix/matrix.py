@@ -548,5 +548,5 @@ class MatrixBot:
                 content,
                 ignore_unverified_devices=ignore_unverified_devices
             )
-        except SendRetryError or LocalProtocolError:
+        except (SendRetryError, LocalProtocolError):
             logger.exception(f"Unable to send message to room {room_id}.")
