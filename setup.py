@@ -1,26 +1,33 @@
-from os import path
-from os.path import dirname, join
-
 import setuptools
 
 with open("README.md") as f:
     long_description = f.read()
 
+with open("requirements.txt") as f:
+    requirements = f.readlines()
+
 setuptools.setup(
     name="hopfenmatrix",
-    version="0.3.0",
+    version="0.4.0",
     author="Wolfgang Fischer, Niklas Pfister",
     author_email="kontakt@omikron.dev",
     description="A library to make matrix-nio easier",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hopfenspace/hopfenmatrix/",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(include=("hopfenmatrix",)),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=open(join(dirname(__file__), "requirements.txt")).readlines()
+    install_requires=[
+        "matrix-nio[e2e]~=0.18.7",
+        "Pillow~=8.4.0",
+        "python-magic~=0.4.18",
+        "aiofiles~=0.8.0",
+        "mutagen~=1.45.1",
+        "aiohttp~=3.8.1"
+    ]
 )
