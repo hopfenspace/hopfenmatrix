@@ -1,7 +1,6 @@
 import enum
 import logging
 import os
-from collections import Coroutine
 import typing
 
 import mutagen
@@ -222,7 +221,7 @@ class MatrixBot:
         )
         self.command_callbacks.append(cmd)
 
-    def add_coroutine_callback(self, coroutine: Coroutine) -> None:
+    def add_coroutine_callback(self, coroutine) -> None:
         """
         This method is used to add a coroutine to the loop. Must be called before start_bot gets executed. The
         coroutine is added after the bot has logged in.
