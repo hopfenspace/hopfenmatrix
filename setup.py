@@ -3,12 +3,9 @@ import setuptools
 with open("README.md") as f:
     long_description = f.read()
 
-with open("requirements.txt") as f:
-    requirements = f.readlines()
-
 setuptools.setup(
     name="hopfenmatrix",
-    version="0.4.0",
+    version="0.4.3",
     author="Wolfgang Fischer, Niklas Pfister",
     author_email="kontakt@omikron.dev",
     description="A library to make matrix-nio easier",
@@ -26,7 +23,7 @@ setuptools.setup(
         "matrix-nio[e2e]~=0.18.7",
         "Pillow~=8.4.0",
         "python-magic~=0.4.18",
-        "aiofiles~=0.8.0",
+        "aiofiles~=0.6.0",
         "mutagen~=1.45.1",
         "aiohttp~=3.8.1"
     ]

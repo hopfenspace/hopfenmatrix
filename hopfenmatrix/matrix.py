@@ -7,7 +7,7 @@ import mutagen
 import aiofiles.os
 from PIL import Image
 from nio import (AsyncClient, SendRetryError, AsyncClientConfig, InviteMemberEvent, RoomMessage, RoomMessageText,
-                 MatrixRoom, UploadResponse)
+                 MatrixRoom, UploadResponse, LocalProtocolError)
 import magic
 
 from hopfenmatrix.callbacks import apply_filter, auto_join, filter_allowed_rooms, filter_allowed_users, command_handler, \
@@ -548,5 +548,5 @@ class MatrixBot:
                 content,
                 ignore_unverified_devices=ignore_unverified_devices
             )
-        except SendRetryError:
+        except SendRetryError or LocalProtocolError:
             logger.exception(f"Unable to send message to room {room_id}.")
