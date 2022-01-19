@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="hopfenmatrix",
-    version="0.4.6",
+    version="0.4.7",
     author="Wolfgang Fischer, Niklas Pfister",
     author_email="kontakt@omikron.dev",
     description="A library to make matrix-nio easier",
@@ -21,7 +21,7 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[
         "matrix-nio[e2e]~=0.18.7",
-        "Pillow~=8.4.0",
+        "Pillow~=9.0.0",
         "python-magic~=0.4.18",
         "aiofiles~=0.6.0",
         "mutagen~=1.45.1",
