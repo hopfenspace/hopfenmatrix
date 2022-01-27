@@ -26,8 +26,10 @@ async def run(
         callbacks = []
     else:
         callbacks = api.coroutine_callbacks
+
     # Keep trying to reconnect on failure (with some time in-between)
-    while True:
+    running = True
+    while running:
         try:
             if not api.client.access_token:
                 # Try to login with the configured username/password
@@ -87,6 +89,7 @@ async def run(
                 asyncio.get_event_loop().create_task(callback)
 
             await api.client.sync_forever(timeout=30000, full_state=True, loop_sleep_time=100)
+            running = False
 
         except (ClientConnectionError, ServerDisconnectedError):
             logger.warning("Unable to connect to homeserver, retrying in 15s...")
@@ -95,6 +98,7 @@ async def run(
             sleep(15)
         except KeyboardInterrupt:
             logger.info("Exiting bot")
+            running = False
         finally:
             # Make sure to close the client connection on disconnect
             await api.client.close()
