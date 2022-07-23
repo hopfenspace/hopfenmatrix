@@ -178,7 +178,7 @@ def command_handler(api) -> Callback:
                     await command_callback(api, room, event)
                     return True
             else:
-                if msg.startswith(message):
+                if msg.startswith(message + " ") or msg == message:
                     logger.info(f"Found command in msg: {msg}")
                     await command_callback(api, room, event)
                     return True
